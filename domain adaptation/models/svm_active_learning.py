@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-Logistic Regression using active learning with UncertaintySampling
+Support Vector Machine using active learning with UncertaintySampling
 Author: Michael M.Meskhi
 Project: Domain Adaptation with Active Learning
 Date: 2018-03-21
@@ -21,6 +21,10 @@ from libact.base.dataset import Dataset, import_libsvm_sparse
 from libact.models import *
 from libact.query_strategies import *
 from libact.labelers import IdealLabeler
+
+
+def results(accuracy):
+    print("Standard Deviation: " + str(np.std(accuracy)) + "\n" + "Mean Accuracy: " + str(np.mean(accuracy)))
 
 def run(trn_ds, tst_ds, lbr, model, qs, quota):
     E_in, E_out, accuracy = [], [], []
@@ -42,7 +46,7 @@ def run(trn_ds, tst_ds, lbr, model, qs, quota):
 def split_train_test(dataset_filepath, test_size, n_labeled):
     X, y = import_libsvm_sparse(dataset_filepath).format_sklearn()
 
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size, random_state=42, shuffle=True)
     trn_ds = Dataset(X_train, np.concatenate([y_train[:n_labeled], [None] * (len(y_train) - n_labeled)]))
     tst_ds = Dataset(X_test, y_test)
     fully_labeled_trn_ds = Dataset(X_train, y_train)
@@ -52,8 +56,8 @@ def split_train_test(dataset_filepath, test_size, n_labeled):
 def main():
     # Path to your libsvm_sparse type classification dataset.
     # If dataset not in libsvm_sparse type use libsvm to convert.
-    dataset_filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'mars.txt')
-    test_size = 0.33    # The percentage of samples in the dataset that will be randomly selected and assigned to the test set.
+    dataset_filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'data/mars.txt')
+    test_size = 0.5    # The percentage of samples in the dataset that will be randomly selected and assigned to the test set.
     n_labeled = 10      # Number of samples that are initially labeled.
 
     # Load dataset
@@ -61,10 +65,10 @@ def main():
     trn_ds2 = copy.deepcopy(trn_ds)
     lbr = IdealLabeler(fully_labeled_trn_ds)
 
-    quota = len(y_train) - n_labeled   # Number of samples to query.
+    quota = 200   # Number of samples to query.
 
     # Model is the base learner, e.g. LogisticRegression, SVM ... etc.
-    qs = UncertaintySampling(trn_ds, method='entropy', model=LogisticRegression())
+    qs = UncertaintySampling(trn_ds, method='lc', model=SVM())
     model = LogisticRegression()
     E_in_1, E_out_1, accuracy = run(trn_ds, tst_ds, lbr, model, qs, quota)
 
@@ -84,9 +88,12 @@ def main():
     plt.plot(query_num, accuracy, 'y', label="accuracy")
     plt.xlabel('Number of Queries')
     plt.ylabel('Accuracy')
-    plt.title('Logistic Regression + Actve Learning')
+    plt.title('SVM + Active Learning')
     plt.legend(loc='upper center', bbox_to_anchor=(0.8, -0.5), fancybox=True, shadow=True, ncol=5)
+    plt.savefig('vis/svm.png')
     plt.show()
+
+    results(accuracy)
 
 if __name__ == '__main__':
     main()

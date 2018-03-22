@@ -1,0 +1,5 @@
+                     MARS DATASET
+------------------------------------------------------
+1- Bayesian DA: Mean(90.70) | Standard Deviation(1.24)
+2- SVM + AL: Mean(85.90) | Standard Deviation(0.02)
+3- LogReg + AL: Mean(82.18) | Standard Deviation(0.02)
